@@ -7,13 +7,13 @@ namespace UserManagement.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class AddedConfirmedReportFieldNullable : IMigrationMetadata
+    public sealed partial class pageschanges : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(AddedConfirmedReportFieldNullable));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(pageschanges));
         
         string IMigrationMetadata.Id
         {
-            get { return "201906041317517_AddedConfirmedReportFieldNullable"; }
+            get { return "202005152142311_pages changes"; }
         }
         
         string IMigrationMetadata.Source

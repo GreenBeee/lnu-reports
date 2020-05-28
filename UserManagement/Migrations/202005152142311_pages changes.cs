@@ -3,16 +3,16 @@ namespace UserManagement.Migrations
     using System;
     using System.Data.Entity.Migrations;
     
-    public partial class AddedThemeFinancials : DbMigration
+    public partial class pageschanges : DbMigration
     {
         public override void Up()
         {
-            AddColumn("dbo.ThemeOfScientificWorks", "Financial", c => c.Int(nullable: false));
+            AddColumn("dbo.Publications", "Pages", c => c.String());
         }
         
         public override void Down()
         {
-            DropColumn("dbo.ThemeOfScientificWorks", "Financial");
+            DropColumn("dbo.Publications", "Pages");
         }
     }
 }

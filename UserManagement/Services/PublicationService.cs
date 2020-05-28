@@ -13,61 +13,56 @@ namespace UserManagement.Services
 
         public String GenerateNameOfPublication(Publication publication)
         {
-            var user = publication.User.FirstOrDefault();
             string toReturn = "";
-            if (user != null)
-            {
-                var initials = user.I18nUserInitials.Where(x => x.Language == publication.Language).First();
-                toReturn = initials.LastName + " " + initials.FirstName.Substring(0, 1).ToUpper() + ". " + initials.FathersName.Substring(0, 1).ToUpper() + ". ";
-            }
-            toReturn = toReturn + publication.Name + " / ";
+
+            toReturn += publication.MainAuthor;
+            toReturn += publication.Name + " / ";
             for (var i = 0; i < publication.User.Count; i++)
             {
                 var initials = publication.User.ElementAt(i).I18nUserInitials.Where(x => x.Language == publication.Language).First();
                 toReturn = toReturn + initials.FirstName.Substring(0, 1).ToUpper()
                     + ". " + initials.FathersName.Substring(0, 1).ToUpper()
                     + ". " + initials.LastName;
-                if (i == publication.User.Count - 1)
-                {
-                    if (publication.OtherAuthors == null || publication.OtherAuthors == "")
-                    {
-                        toReturn = toReturn + ". – " + (publication.Place == null ? (publication.Date.Year + ".") :
-                            (": " + publication.Edition == null ? "" : ", " + publication.Date.Year + "."));
-                        toReturn += AddEndOfPublication(publication);
-                        break;
-                    } else
-                    {
-                        toReturn = toReturn + ", " + publication.OtherAuthors + ". – " + (publication.Place == null ? (publication.Date.Year + ".") :
-                            (": " + publication.Edition == null ? "" : ", " + publication.Date.Year + "."));
-                        toReturn += AddEndOfPublication(publication);
-                    }
-                }
-                else
-                {
+                if (i != publication.User.Count - 1)
                     toReturn = toReturn + ", ";
-                }
             }
+
+            toReturn = toReturn + ", " +
+                ((publication.OtherAuthors != null || publication.OtherAuthors != "") ? publication.OtherAuthors : "") +
+                " // " +
+                (publication.Magazine != null ? publication.Magazine + ", " : "") +
+                (publication.Edition != null ? publication.Edition + ", " : "") +
+                (publication.Place != null ? publication.Place : "") +
+                ". – " +
+                publication.Date.Year + ".";
+
+            toReturn += AddEndOfPublication(publication);
+
             return toReturn;
         }
         private String AddEndOfPublication(Publication publication)
         {
             string toReturn = "";
-            if (publication.PublicationType == PublicationType.Монографія
-                            || publication.PublicationType == PublicationType.Підручник
-                            || publication.PublicationType == PublicationType.Навчальний_Посібник
-                            || publication.PublicationType == PublicationType.Інше_Наукове_Видання)
+            toReturn = toReturn + " – " + (publication.Tome == null ? "" : (publication.Tome + ", "));
+            if(publication.PublicationType == PublicationType.Монографія
+                        || publication.PublicationType == PublicationType.Підручник
+                        || publication.PublicationType == PublicationType.Навчальний_Посібник)
             {
-                toReturn = toReturn + " – " + (publication.Tome == null ? "" : (publication.Tome + ", ")) + publication.SizeOfPages;
-                switch (publication.Language)
-                {
-                    case Language.UA:
-                        toReturn += " друк. арк.";
-                        break;
-                    case Language.EN:
-                        toReturn += " p.";
-                        break;
-                }
+                toReturn = toReturn + publication.Pages;
+                if (publication.Language == Language.UA)
+                    toReturn = toReturn + " c";
+                if (publication.Language == Language.EN)
+                    toReturn = toReturn + " p";
             }
+            else
+            {
+                if (publication.Language == Language.UA)
+                    toReturn = toReturn + "C. ";
+                if (publication.Language == Language.EN)
+                    toReturn = toReturn + "P. ";
+                toReturn = toReturn + publication.Pages;
+            }
+            toReturn = toReturn + ".";
             return toReturn;
         }
 
@@ -105,15 +100,25 @@ namespace UserManagement.Services
             var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Навчальний_Посібник).ToList();
             return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneTrainingBook()));
         }
+        public string GetPunktSixOneArticlesFactor(Report report)
+        {
+            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Стаття_В_Виданнях_які_мають_імпакт_фактор).ToList();
+            return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneArticlesFactor()));
+        }
         public string GetPunktSixOneOther(Report report)
         {
             var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Інше_Наукове_Видання).ToList();
             return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneOther()));
         }
-        public string GetPunktSixOneArticlesInterantional(Report report)
+        public string GetPunktSixOneArticlesOtherInterantional(Report report)
         {
-            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Стаття_В_Закордонних_Виданнях).ToList();
+            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Стаття_В_Інших_Закордонних_Виданнях).ToList();
             return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneArticlesInternationalOther()));
+        }
+        public string GetPunktSixOneArticlesInterantionalMetricals(Report report)
+        {
+            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Стаття_В_Інших_Виданнях_які_включені_до_міжнародних_наукометричних_баз_даних).ToList();
+            return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneArticlesInternational()));
         }
         public string GetPunktSixOneArticlesNationalFah(Report report)
         {
@@ -128,18 +133,18 @@ namespace UserManagement.Services
         public string GetPunktSixOneConferences(Report report)
         {
             var count = report.PrintedPublication
-                .Where(x => x.PublicationType == PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції
-                         || x.PublicationType == PublicationType.Теза_Доповіді_На_Міжнародній_Конференції).Count();
+                .Where(x => x.PublicationType == PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції
+                         || x.PublicationType == PublicationType.Тези_Доповіді_На_Міжнародній_Конференції).Count();
             return count == 0 ? "" : GenerateTemplateForGenericPunktHeader(GetTitleForPunktSixOneConferences());
         }
         public string GetPunktSixOneInternationalConferences(Report report)
         {
-            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Теза_Доповіді_На_Міжнародній_Конференції).ToList();
+            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Тези_Доповіді_На_Міжнародній_Конференції).ToList();
             return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneConferencesInternational()));
         }
         public string GetPunktSixOneNationalConferences(Report report)
         {
-            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції).ToList();
+            var collection = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції).ToList();
             return PopulatePunkt(collection, GenerateTemplateForGenericPunkt(GetTitleForPunktSixOneConferencesNational()));
         }
         public string GetPunktSixTwo(Report report)
@@ -185,7 +190,9 @@ namespace UserManagement.Services
             var count = report.PrintedPublication.Where(x => x.PublicationType == PublicationType.Стаття
             || x.PublicationType == PublicationType.Стаття_В_Інших_Виданнях_України
             || x.PublicationType == PublicationType.Стаття_В_Закордонних_Виданнях
-            || x.PublicationType == PublicationType.Стаття_В_Фахових_Виданнях_України).Count();
+            || x.PublicationType == PublicationType.Стаття_В_Фахових_Виданнях_України
+            || x.PublicationType == PublicationType.Стаття_В_Інших_Закордонних_Виданнях
+            || x.PublicationType == PublicationType.Стаття_В_Виданнях_які_мають_імпакт_фактор).Count();
             return count == 0 ? "" : GenerateTemplateForGenericPunktHeader(GetTitleForPunktSixOneArticles());
         }
 

@@ -1,13 +1,19 @@
 ﻿using System;
+using System.Configuration;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Threading.Tasks;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.Security;
 using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.Owin;
 using Microsoft.Owin.Security;
+using MimeKit;
+using MailKit.Net.Smtp;
 using UserManagement.Models;
 using UserManagement.Models.db;
+using UserManagement.Utilities;
 
 namespace UserManagement.Controllers
 {
@@ -58,6 +64,8 @@ namespace UserManagement.Controllers
         public ActionResult Login(string returnUrl)
         {
             ViewBag.ReturnUrl = returnUrl;
+            ViewBag.Success = TempData["Success"];
+           
             return View();
         }
 
@@ -78,7 +86,20 @@ namespace UserManagement.Controllers
                 ModelState.AddModelError("", "This user is not active.");
                 return View(model);
             }
+
+            HttpCookie cookie = new HttpCookie("UserName", model.Email);
+            HttpCookie cookie1 = HttpContext.Request.Cookies.Get("UserName");
+            if (model.RememberMe)
+            {
+                cookie.Expires = DateTime.Now.AddDays(10);
+            }
+            Response.Cookies.Add(cookie);
+
+            
+
+
             var result = await SignInManager.PasswordSignInAsync(model.Email, model.Password, model.RememberMe, shouldLockout: false);
+
             switch (result)
             {
                 case SignInStatus.Success:
@@ -92,6 +113,7 @@ namespace UserManagement.Controllers
                     ModelState.AddModelError("", "Invalid login attempt.");
                     return View(model);
             }
+          
         }
 
         //
@@ -101,6 +123,7 @@ namespace UserManagement.Controllers
         {
             ViewBag.AllCathedras = db.Cathedra.ToList().Select(x => x.Name);
             ViewBag.AllFaculties = db.Faculty.ToList().Select(x => x.Name);
+            
             return View();
         }
 
@@ -141,7 +164,8 @@ namespace UserManagement.Controllers
                         });
                     }
                     db.SaveChanges();
-                    return RedirectToAction("Login", "Account");
+                    TempData["Success"] = true;
+                    return  RedirectToAction("Login", "Account");
                 }
                 AddErrors(result);
             }
@@ -167,13 +191,63 @@ namespace UserManagement.Controllers
             if (ModelState.IsValid)
             {
                 var user = await UserManager.FindByNameAsync(model.Email);
-                if (user == null || !(await UserManager.IsEmailConfirmedAsync(user.Id)))
+                if (user == null)
                 {
-                    return View("ForgotPasswordConfirmation");
+                    return View(model);                    
                 }
-            }
 
-            return View(model);
+                string smtpHost = ConfigurationManager.AppSettings["smtpHost"];
+                int smtpPort = Convert.ToInt32(ConfigurationManager.AppSettings["smtpPort"]);
+                bool smtpUseSSL = Convert.ToBoolean(ConfigurationManager.AppSettings["smtpUseSSL"]);
+                string smtpUserName = ConfigurationManager.AppSettings["smtpUserName"];
+                string smtpPassword = ConfigurationManager.AppSettings["smtpPassword"];
+
+                // get change password page
+
+                MimeMessage message = new MimeMessage();
+
+                string address = "no-reply@lnu.edu.ua";
+
+                MailboxAddress from = new MailboxAddress("LnuReports", address);
+                message.From.Add(from);
+
+                MailboxAddress to = new MailboxAddress("User", user.Email);
+                message.To.Add(to);
+
+                message.Subject = "Restore password";
+
+                BodyBuilder bodyBuilder = new BodyBuilder();
+
+
+                //var provider = new DpapiDataProtectionProvider("SampleAppName");
+
+                //UserManager.UserTokenProvider = new DataProtectorTokenProvider<ApplicationUser>(
+                //    provider.Create("SampleTokenName"));
+
+                string hashedGuId = await UserManager.GeneratePasswordResetTokenAsync(user.Id);
+
+                hashedGuId = hashedGuId.Crypt();
+
+                string recoveryLink = Request.Url.ToString()
+                    .Replace("ForgotPassword", $"ResetPassword?code=" + hashedGuId );
+
+                // generate body
+                //bodyBuilder.HtmlBody = body;
+                bodyBuilder.HtmlBody = $"<a href='{recoveryLink}'>Click here to reset Your password</a>";
+
+                message.Body = bodyBuilder.ToMessageBody();
+
+                SmtpClient client = new SmtpClient();
+
+                client.Connect(smtpHost, smtpPort, smtpUseSSL);
+
+                client.Authenticate(smtpUserName, smtpPassword);
+
+                client.Send(message);
+                client.Disconnect(true);
+                client.Dispose();
+            }
+            return View("ForgotPasswordConfirmation");
         }
 
         //
@@ -206,8 +280,11 @@ namespace UserManagement.Controllers
             if (user == null)
             {
                 return RedirectToAction("ResetPasswordConfirmation", "Account");
-            }
-            var result = await UserManager.ResetPasswordAsync(user.Id, model.Code, model.Password);
+            }            
+
+            var result = await UserManager.ResetPasswordAsync(user.Id, model.Code.Decrypt(), model.Password);
+
+
             if (result.Succeeded)
             {
                 return RedirectToAction("ResetPasswordConfirmation", "Account");

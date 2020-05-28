@@ -1,4 +1,4 @@
-﻿using System;
+﻿ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Web;
@@ -210,9 +210,9 @@ namespace UserManagement.Services
                 PublicationType.Стаття_В_Фахових_Виданнях_України, distinctPublications);
             var punktNineConferencesHeader = GetConferencesHeader(distinctPublications);
             var punktNineConferencesInternational = GetPublicationArticlesOrConferencesTemplate(GetTitleForConferencesInternational(),
-                PublicationType.Теза_Доповіді_На_Міжнародній_Конференції, distinctPublications);
+                PublicationType.Тези_Доповіді_На_Міжнародній_Конференції, distinctPublications);
             var punktNineConferencesNational= GetPublicationArticlesOrConferencesTemplate(GetTitleForConferencesNational(),
-                PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції, distinctPublications);
+                PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції, distinctPublications);
 
             var punktTen = GetPunktTen(report);
             var punktEleven = GetPunktEleven(report);
@@ -405,8 +405,8 @@ namespace UserManagement.Services
         }
         private string GetConferencesHeader(List<Publication> publications)
         {
-            if (publications == null || !publications.Any(x => x.PublicationType == PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції ||
-                                                                x.PublicationType == PublicationType.Теза_Доповіді_На_Міжнародній_Конференції ))
+            if (publications == null || !publications.Any(x => x.PublicationType == PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції ||
+                                                                x.PublicationType == PublicationType.Тези_Доповіді_На_Міжнародній_Конференції ))
             {
                 return "";
             }
@@ -649,8 +649,8 @@ namespace UserManagement.Services
         {
             return ReplaceStringWithParameters(GetFooterTemplate(), new Dictionary<string, string>()
             {
-                [PROTOCOL_CONST] = report.Protocol,
-                [DATE_CONST] = report.Date.Value.ToString("dd.MM.yyyy"),
+                [PROTOCOL_CONST] = report.Protocol != null ? report.Protocol : "",
+                [DATE_CONST] = report.Date != null ? report.Date.Value.ToString("dd.MM.yyyy") : "",
                 [FACULTY_CONST] = report.User.Cathedra.Faculty.Name.Replace("Факультет ", "").ToLower(),
             });
         }

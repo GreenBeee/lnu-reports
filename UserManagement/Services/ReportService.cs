@@ -27,11 +27,12 @@ namespace UserManagement.Services
         private static String PUNKT_6_1_TRAINING = "{PUNKT_6_1_TRAINING}";
         private static String PUNKT_6_1_OTHER = "{PUNKT_6_1_OTHER}";
         private static String PUNKT_6_1_ARTICLES = "{PUNKT_6_1_ARTICLES}";
-        //private static String PUNKT_6_1_ARTICLES_FACTOR = "{PUNKT_6_1_ARTICLES_FACTOR}";
+        private static String PUNKT_6_1_ARTICLES_FACTOR = "{PUNKT_6_1_ARTICLES_FACTOR}";
         //private static String PUNKT_6_1_ARTICLES_INTERNATIONAL = "{PUNKT_6_1_ARTICLES_INTERNATIONAL}";
         private static String PUNKT_6_1_ARTICLES_OTHER_INTERNATIONAL = "{PUNKT_6_1_ARTICLES_OTHER_INTERNATIONAL}";
         private static String PUNKT_6_1_ARTICLES_NATIONAL = "{PUNKT_6_1_ARTICLES_NATIONAL}";
         private static String PUNKT_6_1_ARTICLES_NATIONAL_FAH = "{PUNKT_6_1_ARTICLES_NATIONAL_FAH}";
+        private static String PUNKT_6_1_ARTICLES_INTERNATIONAL_METRICALS = "{PUNKT_6_1_ARTICLES_INTERNATIONAL_METRICALS}";
         private static String PUNKT_6_1_CONFERENCES = "{PUNKT_6_1_CONFERENCES}";
         private static String PUNKT_6_1_CONFERENCES_INTERNATIONAL = "{PUNKT_6_1_CONFERENCES_INTERNATIONAL}";
         private static String PUNKT_6_1_CONFERENCES_NATIONAL = "{PUNKT_6_1_CONFERENCES_NATIONAL}";
@@ -54,6 +55,7 @@ namespace UserManagement.Services
         private static String YEAR_CONST = "{YEAR}";
         private static String POSITION_CONST = "{POSITION}";
         private static String CATHEDRA_CONST = "{CATHEDRA}";
+        private static String CATHEDRA_LEAD = "{CATHEDRA_LEAD}";
         private static String USER_NAME_CONST = "{USER_NAME}";
         private static String BIRTHDAY_CONST = "{BIRTHDAY}";
         private static String GRADUATION_YEAR_CONST = "{GRADUATION_YEAR}";
@@ -64,6 +66,7 @@ namespace UserManagement.Services
         private static String THEME_NUMBER_SCIENTIFIC_WORK_CONST = "{THEME_NUMBER_SCIENTIFIC_WORK_CONST}";
         private static String PERIOD_SCIENTIFIC_WORK_CONST = "{PERIOD_SCIENTIFIC_WORK_CONST}";
         private static String HEAD_SCIENTIFIC_WORK_CONST = "{HEAD_SCIENTIFIC_WORK_CONST}";
+        private static String FINANCIAL = "{FINANCIAL}";
         private static String PROTOCOL_CONST = "{PROTOCOL_CONST}";
         private static String DATE_CONST = "{DATE_CONST}";
         private static String GENERIC_TEXT_CONST = "{GENERIC_TEXT}";
@@ -116,7 +119,7 @@ namespace UserManagement.Services
                 + PUNKT_6_1_TRAINING
                 + PUNKT_6_1_OTHER
                 + PUNKT_6_1_ARTICLES
-                //+ PUNKT_6_1_ARTICLES_FACTOR
+                + PUNKT_6_1_ARTICLES_FACTOR
                 //+ PUNKT_6_1_ARTICLES_INTERNATIONAL
                 + PUNKT_6_1_ARTICLES_OTHER_INTERNATIONAL
                 + PUNKT_6_1_ARTICLES_NATIONAL_FAH
@@ -152,9 +155,9 @@ namespace UserManagement.Services
             var readyPunktSixOneTrainingBook = publicationService.GetPunktSixOneTrainingBook(report);
             var readyPunktSixOneOther = publicationService.GetPunktSixOneOther(report);
             var readyPunktSixOneArticles = publicationService.GetPunktSixOneArticles(report);
-            //     + PUNKT_6_1_ARTICLES_FACTOR
-            //     + PUNKT_6_1_ARTICLES_INTERNATIONAL
-            var readyPunktSixOneArticlesInternationals = publicationService.GetPunktSixOneArticlesInterantional(report);
+            var readyPunktSixOneArticlesFactor = publicationService.GetPunktSixOneArticlesFactor(report);
+            var readyPunktSixOneArticlesInternationals = publicationService.GetPunktSixOneArticlesOtherInterantional(report);
+            var readyPunktSixOneArticlesInternationalsMetricals = publicationService.GetPunktSixOneArticlesInterantionalMetricals(report);
             var readyPunktSixOneArticlesNationalFah = publicationService.GetPunktSixOneArticlesNationalFah(report);
             var readyPunktSixOneArticlesNational = publicationService.GetPunktSixOneArticlesNational(report);
             var readyPunktSixOneConferences = publicationService.GetPunktSixOneConferences(report);
@@ -190,7 +193,9 @@ namespace UserManagement.Services
                 [PUNKT_6_1_TRAINING] = readyPunktSixOneTrainingBook,
                 [PUNKT_6_1_OTHER] = readyPunktSixOneOther,
                 [PUNKT_6_1_ARTICLES] = readyPunktSixOneArticles,
-                [PUNKT_6_1_ARTICLES_OTHER_INTERNATIONAL] = readyPunktSixOneArticlesInternationals,
+                [PUNKT_6_1_ARTICLES_INTERNATIONAL_METRICALS] = readyPunktSixOneArticlesInternationalsMetricals,
+                [PUNKT_6_1_ARTICLES_FACTOR] = readyPunktSixOneArticlesFactor,
+                [PUNKT_6_1_ARTICLES_OTHER_INTERNATIONAL] = readyPunktSixOneArticlesInternationals,              
                 [PUNKT_6_1_ARTICLES_NATIONAL_FAH] = readyPunktSixOneArticlesNationalFah,
                 [PUNKT_6_1_ARTICLES_NATIONAL] = readyPunktSixOneArticlesNational,
                 [PUNKT_6_1_CONFERENCES] = readyPunktSixOneConferences,
@@ -218,7 +223,7 @@ namespace UserManagement.Services
         {
             return "<div class=\"header\"><h2> Індивідуальний звіт про наукову роботу в "
                 + YEAR_CONST
-                + "</h2><p><i>"
+                + " році</h2><p><i>"
                 + POSITION_CONST
                 + " кафедри "
                 + CATHEDRA_CONST + " "
@@ -242,7 +247,7 @@ namespace UserManagement.Services
         private string GenerateTemplateForPunktOne()
         {
             return "<div class=\"block\"><p>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp1.Участь у науково-дослідній тематиці підрозділу − шифр теми, категорія (держбюджетна,госпдоговірна, в межах робочого часу), назва, стисло зміст виконаної роботи(до семи рядків).</p><p class=\"input-text\"><i>"
-                + THEME_SCIENTIFIC_WORK_CONST + ". " 
+                +  FINANCIAL + " " + THEME_SCIENTIFIC_WORK_CONST + ". " //
                 + THEME_NUMBER_SCIENTIFIC_WORK_CONST 
                 + "; " + HEAD_SCIENTIFIC_WORK_CONST + " "
                 + PERIOD_SCIENTIFIC_WORK_CONST
@@ -253,8 +258,8 @@ namespace UserManagement.Services
         private string GenerateTemplateForGenericPunkt(String title)
         {
             return "<div class=\"block\"><p>&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp&nbsp"
-                + title
-                + "</p><p class=\"input-text\">"
+                + title +
+                "</p><p class=\"input-text\">"
                 + GENERIC_TEXT_CONST
                 + "</p></div>";
         }
@@ -297,14 +302,14 @@ namespace UserManagement.Services
             var initials = report.User.I18nUserInitials.Where(x => x.Language == Language.UA).First();
             return ReplaceStringWithParameters(GenerateTemplateForHeadOfReport(), new Dictionary<string, string>()
             {
-                [YEAR_CONST] = report.Date.Value.Year.ToString(),
-                [POSITION_CONST] = report.User.Position.Value,
-                [CATHEDRA_CONST] = report.User.Cathedra.Name.Replace("Кафедра ", ""),
+                [YEAR_CONST] = report.Date == null ? "" : report.Date.Value.Year.ToString(),
+                [POSITION_CONST] = report.User.Position == null ? "" : report.User.Position.Value.Replace("кафедри",string.Empty),
+                [CATHEDRA_CONST] = report.User.Cathedra == null ? "" : report.User.Cathedra.Name.Replace("Кафедра ", ""),
                 [USER_NAME_CONST] = initials.LastName + " " + initials.FirstName + " " + initials.FathersName,
-                [BIRTHDAY_CONST] = report.User.BirthDate.ToString("dd.MM.yyyy"),
+                [BIRTHDAY_CONST] = report.User.BirthDate.Year.ToString(),
                 [GRADUATION_YEAR_CONST] = report.User.GraduationDate.Year.ToString(),
-                [ACADEMIC_STATUS_YEAR_CONST] = report.User.AcademicStatus.Value == "Без ступеня" ? report.User.AcademicStatus.Value : report.User.AcademicStatus.Value + ", " + report.User.DefenseYear.Year.ToString(),
-                [SCIENCE_DEGREE_YEAR_CONST] = report.User.ScienceDegree.Value == "Без звання" ? report.User.ScienceDegree.Value : report.User.ScienceDegree.Value + ", " + report.User.AwardingDate.Year.ToString(),
+                [ACADEMIC_STATUS_YEAR_CONST] = report.User.AcademicStatus == null ? "" : report.User.AcademicStatus.Value == "Без ступеня" ? report.User.AcademicStatus.Value : report.User.AcademicStatus.Value + ", " + report.User.DefenseYear.Year.ToString(),
+                [SCIENCE_DEGREE_YEAR_CONST] = report.User.ScienceDegree == null ? "" : report.User.ScienceDegree.Value == "Без звання" ? report.User.ScienceDegree.Value : report.User.ScienceDegree.Value + ", " + report.User.AwardingDate.Year.ToString(),
             });
         }
         private string GetPunktOne(Report report)
@@ -320,6 +325,7 @@ namespace UserManagement.Services
                 [PERIOD_SCIENTIFIC_WORK_CONST] = report.ThemeOfScientificWork.PeriodFrom.Year.ToString() + " - " + report.ThemeOfScientificWork.PeriodTo.Year.ToString(),
                 [DESCR_SCIENTIFIC_WORK_CONST] = report.ThemeOfScientificWorkDescription,
                 [HEAD_SCIENTIFIC_WORK_CONST] = report.ThemeOfScientificWork.ScientificHead,
+                [FINANCIAL] = report.ThemeOfScientificWork.Financial.ToString().ToLower(),
             });
         }
         private string GetPunktTwo(Report report)
@@ -382,18 +388,20 @@ namespace UserManagement.Services
                 [TRAINING_BOOK_PERIOD_CONST] = dictionaryInReport.ContainsKey(PublicationType.Навчальний_Посібник) ? dictionaryInReport[PublicationType.Навчальний_Посібник].ToString() : "0",
                 [ARTICLES_ALL_CONST] = ((dictionary.ContainsKey(PublicationType.Стаття) ? dictionary[PublicationType.Стаття] : 0)
                                         + (dictionary.ContainsKey(PublicationType.Стаття_В_Інших_Виданнях_України) ? dictionary[PublicationType.Стаття_В_Інших_Виданнях_України] : 0)
-                                        + (dictionary.ContainsKey(PublicationType.Стаття_В_Закордонних_Виданнях) ? dictionary[PublicationType.Стаття_В_Закордонних_Виданнях] : 0)
+                                        + (dictionary.ContainsKey(PublicationType.Стаття_В_Інших_Закордонних_Виданнях) ? dictionary[PublicationType.Стаття_В_Інших_Закордонних_Виданнях] : 0)
+                                        + (dictionary.ContainsKey(PublicationType.Стаття_В_Виданнях_які_мають_імпакт_фактор) ? dictionary[PublicationType.Стаття_В_Виданнях_які_мають_імпакт_фактор] : 0)
                                         + (dictionary.ContainsKey(PublicationType.Стаття_В_Фахових_Виданнях_України) ? dictionary[PublicationType.Стаття_В_Фахових_Виданнях_України] : 0)).ToString(),
                 [ARTICLES_PERIOD_CONST] = ((dictionaryInReport.ContainsKey(PublicationType.Стаття) ? dictionaryInReport[PublicationType.Стаття] : 0)
                                         + (dictionaryInReport.ContainsKey(PublicationType.Стаття_В_Інших_Виданнях_України) ? dictionaryInReport[PublicationType.Стаття_В_Інших_Виданнях_України] : 0)
-                                        + (dictionaryInReport.ContainsKey(PublicationType.Стаття_В_Закордонних_Виданнях) ? dictionaryInReport[PublicationType.Стаття_В_Закордонних_Виданнях] : 0)
+                                        + (dictionaryInReport.ContainsKey(PublicationType.Стаття_В_Інших_Закордонних_Виданнях) ? dictionaryInReport[PublicationType.Стаття_В_Інших_Закордонних_Виданнях] : 0)
+                                        + (dictionaryInReport.ContainsKey(PublicationType.Стаття_В_Виданнях_які_мають_імпакт_фактор) ? dictionaryInReport[PublicationType.Стаття_В_Виданнях_які_мають_імпакт_фактор] : 0)
                                         + (dictionaryInReport.ContainsKey(PublicationType.Стаття_В_Фахових_Виданнях_України) ? dictionaryInReport[PublicationType.Стаття_В_Фахових_Виданнях_України] : 0)).ToString(),
                 [OTHER_WRITINGS_ALL_CONST] = dictionary.ContainsKey(PublicationType.Інше_Наукове_Видання) ? dictionary[PublicationType.Інше_Наукове_Видання].ToString() : "0",
                 [OTHER_WRITINGS_PERIOD_CONST] = dictionaryInReport.ContainsKey(PublicationType.Інше_Наукове_Видання) ? dictionaryInReport[PublicationType.Інше_Наукове_Видання].ToString() : "0",
-                [CONFERENCES_ALL_CONST] = ((dictionary.ContainsKey(PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції) ? dictionary[PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції] : 0)
-                                        + (dictionary.ContainsKey(PublicationType.Теза_Доповіді_На_Міжнародній_Конференції) ? dictionary[PublicationType.Теза_Доповіді_На_Міжнародній_Конференції] : 0)).ToString(),
-                [CONFERENCES_PERIOD_CONST] = ((dictionaryInReport.ContainsKey(PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції) ? dictionaryInReport[PublicationType.Теза_Доповіді_На_Вітчизняній_Конференції] : 0)
-                                        + (dictionaryInReport.ContainsKey(PublicationType.Теза_Доповіді_На_Міжнародній_Конференції) ? dictionaryInReport[PublicationType.Теза_Доповіді_На_Міжнародній_Конференції] : 0)).ToString(),
+                [CONFERENCES_ALL_CONST] = ((dictionary.ContainsKey(PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції) ? dictionary[PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції] : 0)
+                                        + (dictionary.ContainsKey(PublicationType.Тези_Доповіді_На_Міжнародній_Конференції) ? dictionary[PublicationType.Тези_Доповіді_На_Міжнародній_Конференції] : 0)).ToString(),
+                [CONFERENCES_PERIOD_CONST] = ((dictionaryInReport.ContainsKey(PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції) ? dictionaryInReport[PublicationType.Тези_Доповіді_На_Вітчизняній_Конференції] : 0)
+                                        + (dictionaryInReport.ContainsKey(PublicationType.Тези_Доповіді_На_Міжнародній_Конференції) ? dictionaryInReport[PublicationType.Тези_Доповіді_На_Міжнародній_Конференції] : 0)).ToString(),
                 [PATENTS_ALL_CONST] = dictionary.ContainsKey(PublicationType.Патент) ? dictionary[PublicationType.Патент].ToString() : "0",
                 [PATENTS_PERIOD_CONST] = dictionaryInReport.ContainsKey(PublicationType.Патент) ? dictionaryInReport[PublicationType.Патент].ToString() : "0",
             });
@@ -466,11 +474,18 @@ namespace UserManagement.Services
 
         private string GetFooter(Report report)
         {
+            var cathedraLeadInitials = db.Users.FirstOrDefault(x => x.Position.ID == 2 && x.Cathedra.ID == report.User.Cathedra.ID)?.I18nUserInitials.FirstOrDefault();
+            var initials = string.Empty;
+            if (cathedraLeadInitials != null)
+                initials = cathedraLeadInitials.FirstName?.Substring(0, 1).ToUpper()
+                    + ". " + cathedraLeadInitials.FathersName?.Substring(0, 1).ToUpper()
+                    + ". " + cathedraLeadInitials.LastName;
             return ReplaceStringWithParameters(GetFooterTemplate(), new Dictionary<string, string>()
             {
                 [PROTOCOL_CONST] = report.Protocol,
-                [DATE_CONST] = report.Date.Value.ToString("dd.MM.yyyy"),
-                [CATHEDRA_CONST] = report.User.Cathedra.Name.Replace("Кафедра ", ""),
+                [DATE_CONST] = report.Date == null ? "" : report.Date.Value.ToString("dd.MM.yyyy"),
+                [CATHEDRA_CONST] = report.User.Cathedra == null ? "" : report.User.Cathedra.Name.Replace("Кафедра ", ""),
+                [CATHEDRA_LEAD] = initials
             });
         }
 
@@ -539,9 +554,11 @@ namespace UserManagement.Services
                 + PROTOCOL_CONST 
                 + ", дата: "
                 + DATE_CONST 
-                + "</p><p class=\"footer-text\">Завідувач кафедри(керівник підрозділу) "
+                + "</p><p class=\"footer-text\">Завідувач кафедри"
                 + CATHEDRA_CONST 
-                + "__________________</p></div>";
+                + "__________________"
+                + CATHEDRA_LEAD
+                + "</p></div>";
                 }
 
         private String ReplaceStringWithParameters(String str, Dictionary<String, String> parameters)

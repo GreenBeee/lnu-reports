@@ -11,10 +11,20 @@
 {
     @Html.ActionLink("Звіти кафедри", "Index", "ReportCathedraList")
 }
-<form asp-controller="ReportList" asp-action="Index" id="dateForm" style="margin-bottom:10px;">
-    З: <input type="date" name="dateFrom" onchange="submitDate()" value="@ViewBag.dateFrom" />
-    До: <input type="date" name="dateTo" onchange="submitDate()" value="@ViewBag.dateTo" />
+<form asp-controller="ReportList" asp-action="Index" id="dateForm" style="display:flex">
+    <div style="margin: 10px">
+        <label style="display:block">З: </label>
+        <input type="date" name="dateFrom" value="@ViewBag.dateFrom" />
+    </div>
+    <div style="margin: 10px">
+        <label style="display:block">До: </label>
+        <input type="date" name="dateTo" value="@ViewBag.dateTo" />
+    </div>
+    <div style="height:50%; margin: 10px; padding-top:25px">
+        <input type="submit" value="Пошук" />
+    </div>
 </form>
+
 <table class="table">
     <tr>
         <th>
@@ -47,11 +57,18 @@
             <td>
                 @if (!item.IsSigned)
                 {
-                    using (Html.BeginForm("Sign", "ReportList", FormMethod.Get, new { @id = "signCheckboxForm_" + item.ID }))
+                    if (item.Date == null || item.Protocol == null)
                     {
-                        @Html.Hidden("reportId", item.ID)
+                        @Html.DisplayFor(modelItem => item.IsSigned)
                     }
-                    @Html.CheckBoxFor(modelItem => item.IsSigned, new { @id = "signCheckbox_" + item.ID })
+                    else
+                    {
+                        using (Html.BeginForm("Sign", "ReportList", FormMethod.Get, new { @id = "signCheckboxForm_" + item.ID }))
+                        {
+                            @Html.Hidden("reportId", item.ID)
+                        }
+                        @Html.CheckBoxFor(modelItem => item.IsSigned, new { @id = "signCheckbox_" + item.ID })
+                    }
                 }
                 else
                 {
@@ -112,14 +129,33 @@
         $('#dateForm').submit();
     }
     function events() {
-        $('[id^="signCheckbox"]').on('change', function (ev) {
-            console.log(this.id.split("_")[1]);
-            $('#signCheckboxForm_' + this.id.split("_")[1]).submit();
+
+        $('[id^="signCheckbox"]').on('click', function (ev) {
+            if (this.checked == true) {
+                if (confirm('Після підписання ви не будете мати право редагувати звіт.\n' +
+                    'Лише завідувач кафедри може зняти підпис.\n' +
+                    'Ви впевнені, що бажаєте підписати звіт?') == false) {
+
+                    return false;
+                }
+            }
+            else {
+                console.log(this.id.split("_")[1]);
+                $('#signCheckboxForm_' + this.id.split("_")[1]).submit();
+            }
         });
 
-        $('[id^="confirmCheckbox"]').on('change', function (ev) {
-            $('#confirmCheckboxForm_' + this.id.split("_")[1]).submit();
-        })
+        $('[id^="confirmCheckbox"]').on('click', function (ev) {
+            if (this.checked == true) {
+                if (confirm('Після затвердження підпис зможе зняти лише адміністратор деканату.\n' +
+                    'Ви впевнені, що бажаєте затвердити звіт?') == false) {
+                    return false;
+                }
+            }
+            else {
+                $('#confirmCheckboxForm_' + this.id.split("_")[1]).submit();
+            }
+        });
     }
     events();
 </script>

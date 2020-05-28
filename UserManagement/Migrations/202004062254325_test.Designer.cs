@@ -7,13 +7,13 @@ namespace UserManagement.Migrations
     using System.Resources;
     
     [GeneratedCode("EntityFramework.Migrations", "6.1.3-40302")]
-    public sealed partial class ChangedPublicationFields : IMigrationMetadata
+    public sealed partial class test : IMigrationMetadata
     {
-        private readonly ResourceManager Resources = new ResourceManager(typeof(ChangedPublicationFields));
+        private readonly ResourceManager Resources = new ResourceManager(typeof(test));
         
         string IMigrationMetadata.Id
         {
-            get { return "201906101343051_ChangedPublicationFields"; }
+            get { return "202004062254325_test"; }
         }
         
         string IMigrationMetadata.Source

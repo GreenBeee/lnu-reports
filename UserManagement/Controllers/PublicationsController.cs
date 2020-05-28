@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNet.Identity;
+﻿using Microsoft.Ajax.Utilities;
+using Microsoft.AspNet.Identity;
 using Microsoft.AspNet.Identity.EntityFramework;
 using PagedList;
 using System;
@@ -9,6 +10,7 @@ using System.Net;
 using System.Threading;
 using System.Web;
 using System.Web.Mvc;
+using System.Web.UI;
 using UserManagement.Models;
 using UserManagement.Models.db;
 using UserManagement.Models.PublicationDB;
@@ -133,7 +135,7 @@ namespace UserManagement.Controllers
             var languageVerified = language == null || language == "" ? "UA" : language;
             var users = db.Users.Where(x => x.IsActive == true).ToList();
             ViewBag.AllPublicationTypes = Enum.GetNames(typeof(PublicationType))
-                .Select(x => new SelectListItem { Selected = false, Text = x.Replace('_', ' '), Value = x }).ToList();
+                .Select(x => new SelectListItem { Selected = false, Text = x.Replace('_', ' ').Replace(" які",", які"), Value = x }).ToList();
             ViewBag.AllLanguages = Enum.GetNames(typeof(Language))
                 .Select(x => new SelectListItem { Selected = false, Text = x.Replace('_', ' '), Value = x }).ToList();
             ViewBag.AllUsers = users
@@ -149,6 +151,9 @@ namespace UserManagement.Controllers
                          Value = x.Id
                      })
                     .ToList();
+            ViewBag.CurrentUser = users
+                .Where(x => x.UserName == User.Identity.Name)
+                .Select(x => x.Id).ToList();
             return View();
         }
 
@@ -157,9 +162,9 @@ namespace UserManagement.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Create([Bind(Include = "ID,Name,OtherAuthors,Date,SizeOfPages,PublicationType," +
-            "MainAuthor,IsMainAuthorRegistered,Language,Link,Edition,Magazine,DOI,Tome")] Publication publication,
-            [Bind(Include = "UserToAdd")]String[] userToAdd)
+        public ActionResult Create([Bind(Include = "ID,Name,OtherAuthors,PagesFrom,PagesTo,PublicationType,Place," +
+            "MainAuthor,IsMainAuthorRegistered,Language,Link,Edition,Magazine,DOI,Tome")] Publication publication, int? year,
+            [Bind(Include = "UserToAdd")]String[] userToAdd, bool? mainAuthorFromOthers,[Bind(Include = "PagesFrom")] int pagesFrom = -1, [Bind(Include = "PagesTo")] int pagesTo = -1)
         {
             var users = db.Users.Where(x => x.Roles.Count == 1 && x.Roles.Any(y => y.RoleId != db.Roles.Where(z => z.Name == "Superadmin").FirstOrDefault().Id)).ToList();
             ViewBag.AllPublicationTypes = Enum.GetNames(typeof(PublicationType))
@@ -177,35 +182,60 @@ namespace UserManagement.Controllers
                          Value = x.Id
                      })
                     .ToList();
-            if (ModelState.IsValid && userToAdd != null)
+            if (ModelState.IsValid)
             {
-                var publicationExists = db.Publication
-                    .Any(x =>
-                    x.Name == publication.Name
-                    && userToAdd.All(y => x.User.Select(z => z.Id).Contains(y))
-                    && x.PublicationType == publication.PublicationType
-                    );
-                if (publicationExists)
+                if (userToAdd != null)
                 {
-                    ModelState.AddModelError("", "Така публікація вже існує");
-                    return View(publication);
-                }
-                if (userToAdd.Length != 0)
-                {
-                    foreach (var current in userToAdd)
+                    var publicationExists = db.Publication
+                        .Any(x =>
+                        x.Name == publication.Name
+                        && userToAdd.All(y => x.User.Select(z => z.Id).Contains(y))
+                        && x.PublicationType == publication.PublicationType
+                        );
+                    if (publicationExists)
                     {
-                        var user = db.Users.Find(current);
-                        publication.User.Add(user);
-                        user.Publication.Add(publication);
+                        ModelState.AddModelError("", "Така публікація вже існує");
+                        return View(publication);
+                    }
+                    if (userToAdd.Length != 0)
+                    {
+                        foreach (var current in userToAdd)
+                        {
+                            var user = db.Users.Find(current);
+                            publication.User.Add(user);
+                            user.Publication.Add(publication);
+                        }
                     }
                 }
+                publication.Date = new DateTime(year.Value, 1, 1);
+                if (mainAuthorFromOthers.Value)
+                {
+                    var value = publication.OtherAuthors.Split();
+                    publication.MainAuthor = value[0] + " " + value[1];
+                }
+                else
+                {
+                    var user = db.Users.Find(userToAdd[0]);
+                    var initials = user.I18nUserInitials.Where(x => x.Language == publication.Language).First();
+                    publication.MainAuthor = initials.LastName + " " + initials.FirstName.Substring(0, 1).ToUpper() + ". " + initials.FathersName.Substring(0, 1).ToUpper() + ". ";
+                }
+                if(pagesFrom != -1 & pagesTo != -1)
+                {
+                    var pages = "";
+                    pages += pagesFrom;
+                    if (pagesFrom != pagesTo)
+                        pages += "-" + pagesTo;
+                    publication.Pages = pages;
+                    publication.SizeOfPages = Math.Round((pagesTo - pagesFrom + 1) / 16.0, 1);
+                }
+                publication.DOI = publication.DOI ?? "_";
                 db.Publication.Add(publication);
                 db.SaveChanges();
                 return RedirectToAction("Index");
             }
 
             return View(publication);
-        }
+        }        
 
         // GET: Publications/Edit/5
         public ActionResult Edit(int? id)
@@ -218,9 +248,9 @@ namespace UserManagement.Controllers
             if (publication == null)
             {
                 return HttpNotFound();
-            }
+            }            
             ViewBag.AllPublicationTypes = Enum.GetNames(typeof(PublicationType))
-                .Select(x => new SelectListItem { Selected = false, Text = x.Replace('_', ' '), Value = x }).ToList();
+                .Select(x => new SelectListItem { Selected = false, Text = x.Replace('_', ' ').Replace(" які", ", які"), Value = x }).ToList();            
             ViewBag.AllLanguages = Enum.GetNames(typeof(Language))
                 .Select(x => new SelectListItem { Selected = false, Text = x.Replace('_', ' '), Value = x }).ToList();
             var users = db.Users.ToList();
@@ -238,6 +268,17 @@ namespace UserManagement.Controllers
                          Value = x.Id
                      })
                     .ToList();
+            ViewBag.PagesFrom = 0;
+            ViewBag.PagesTo = 0;
+            if(publication.Pages != null)
+            {
+                var pages = publication.Pages.Split('-');
+                ViewBag.PagesFrom = pages[0];
+                if (pages.Length == 2)
+                    ViewBag.PagesTo = pages[1];
+                else if (pages.Length == 1)
+                    ViewBag.PagesTo = pages[0];
+            }
             return View(publication);
         }
 
@@ -246,9 +287,9 @@ namespace UserManagement.Controllers
         // more details see https://go.microsoft.com/fwlink/?LinkId=317598.
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public ActionResult Edit([Bind(Include = "ID,Name,OtherAuthors,Date,SizeOfPages,PublicationType,Language," +
-            "Link,Edition,Magazine,DOI,Tome")] Publication publication,
-            [Bind(Include = "UserToAdd")]String[] userToAdd)
+        public ActionResult Edit([Bind(Include = "ID,Name,OtherAuthors,Date,PagesFrom,PagesTo,PublicationType,Language," +
+            "Link,Edition,Place,Magazine,DOI,Tome")] Publication publication,
+            [Bind(Include = "UserToAdd")]String[] userToAdd,int? year, bool? mainAuthorFromOthers,bool? changeMainAuthor, [Bind(Include = "PagesFrom")] int pagesFrom = -1, [Bind(Include = "PagesTo")] int pagesTo = -1)
         {
             ViewBag.AllPublicationTypes = Enum.GetNames(typeof(PublicationType))
                 .Select(x => new SelectListItem { Selected = false, Text = x, Value = x }).ToList();
@@ -267,35 +308,66 @@ namespace UserManagement.Controllers
                          Value = x.Id
                      })
                     .ToList();
-            if (ModelState.IsValid && userToAdd != null)
+            if (ModelState.IsValid)
             {
-                var publicationExists = db.Publication
-                    .Any(x =>
-                    x.ID != publication.ID
-                    && x.Name == publication.Name
-                    && userToAdd.All(y => x.User.Select(z => z.Id).Contains(y))
-                    && x.PublicationType == publication.PublicationType
-                    );
-                if (publicationExists)
+                if(userToAdd != null)
                 {
-                    ModelState.AddModelError("", "Така публікація вже існує");
-                    return View(publication);
+                    var publicationExists = db.Publication
+                        .Any(x =>
+                        x.ID != publication.ID
+                        && x.Name == publication.Name
+                        && userToAdd.All(y => x.User.Select(z => z.Id).Contains(y))
+                        && x.PublicationType == publication.PublicationType
+                        );
+                    if (publicationExists)
+                    {
+                        ModelState.AddModelError("", "Така публікація вже існує");
+                        return View(publication);
+                    }
                 }
                 var publicationFromDB = db.Publication.Find(publication.ID);
                 publicationFromDB.Name = publication.Name;
                 publicationFromDB.OtherAuthors = publication.OtherAuthors;
                 publicationFromDB.PublicationType = publication.PublicationType;
-                publicationFromDB.SizeOfPages = publication.SizeOfPages;
+                if (pagesFrom != -1 & pagesTo != -1)
+                {
+                    var pages = "";
+                    pages += pagesFrom;
+                    if (pagesFrom != pagesTo)
+                        pages += "-" + pagesTo;
+                    publicationFromDB.Pages = pages;
+                    publicationFromDB.SizeOfPages = Math.Round((pagesTo - pagesFrom + 1) / 16.0, 1);
+                }
                 publicationFromDB.Language = publication.Language;
-                publicationFromDB.Date = publication.Date;
+                publicationFromDB.DOI = publication.DOI ?? "_";
+                publicationFromDB.Place = publication.Place;
+                publicationFromDB.Magazine = publication.Magazine;
+                publicationFromDB.Link = publication.Link;
+                publicationFromDB.Edition = publication.Edition;
+                publicationFromDB.Tome = publication.Tome;
+                if (year.HasValue)
+                    publicationFromDB.Date = new DateTime(year.Value, 1, 1);
                 if (userToAdd != null && userToAdd.Length != 0)
                 {
                     foreach (var current in userToAdd)
                     {
-                        var publicationFormDb = db.Publication.Find(publication.ID);
                         var user = db.Users.Find(current);
-                        publicationFormDb.User.Add(user);
-                        user.Publication.Add(publicationFormDb);
+                        publicationFromDB.User.Add(user);
+                        user.Publication.Add(publicationFromDB);
+                    }
+                }
+                if(changeMainAuthor.Value)
+                {
+                    if (mainAuthorFromOthers.Value)
+                    {
+                        var value = publication.OtherAuthors.Split();
+                        publicationFromDB.MainAuthor = value[0] + " " + value[1];
+                    }
+                    else
+                    {
+                        var user = db.Users.Find(userToAdd[0]);
+                        var initials = user.I18nUserInitials.Where(x => x.Language == publication.Language).First();
+                        publicationFromDB.MainAuthor = initials.LastName + " " + initials.FirstName.Substring(0, 1).ToUpper() + ". " + initials.FathersName.Substring(0, 1).ToUpper() + ". ";
                     }
                 }
                 db.SaveChanges();

@@ -3,6 +3,8 @@ using Microsoft.AspNet.Identity.EntityFramework;
 using Microsoft.Owin;
 using Owin;
 using System;
+using System.Data.Entity;
+using UserManagement.Migrations;
 using UserManagement.Models;
 using UserManagement.Models.db;
 
@@ -20,6 +22,7 @@ namespace UserManagement
         // In this method we will create default User roles and Admin user for login   
         private void CreateRolesandUsers()
         {
+            Database.SetInitializer(new MigrateDatabaseToLatestVersion<ApplicationDbContext, Configuration>());
             ApplicationDbContext context = new ApplicationDbContext();
 
             var roleManager = new RoleManager<IdentityRole>(new RoleStore<IdentityRole>(context));
@@ -30,7 +33,7 @@ namespace UserManagement
                 // first we create Admin rool   
                 var role = new IdentityRole();
                 role.Name = "Superadmin";
-                roleManager.Create(role);
+                roleManager.Create(role); 
 
                 //Here we create a Admin super user who will maintain the website                  
 
